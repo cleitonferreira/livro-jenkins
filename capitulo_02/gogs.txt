@@ -1,0 +1,25 @@
+# Iniciando o PostgreSQL
+sudo mkdir -p /docker/gogs/postgresql/data
+sudo chown -R 999:999 /docker/gogs/postgresql/data
+
+docker run -d \
+ -p 5432:5432 \
+ --name postgresql \
+ --restart=always \
+ -v /docker/gogs/postgresql/data:/var/lib/postgresql/data \
+ -e POSTGRES_PASSWORD=gogs \
+ -e POSTGRES_USER=gogs \
+ -e POSTGRES_DB=gogs \
+postgres
+
+# Iniciando o Gogs
+sudo mkdir -p /docker/gogs/data
+
+docker run -d \
+ -p 10022:22 \
+ -p 80:3000 \
+ --name gogs \
+  --restart=always \
+ -v /docker/gogs/data:/data \
+ -v /etc/hosts:/etc/hosts \
+gogs/gogs

@@ -1,0 +1,19 @@
+<settings>
+    <servers>
+      <server>
+        <id>empresa_teste</id>
+        <username>jenkins</username>
+        <password>jenkins</password>
+      </server>
+    </servers>
+    <profiles>
+      <profile>
+        <repositories>
+          <repository>
+            <id>empresa_teste</id>
+            <url>http://ci-server.domain.com.br:8081/repository/empresa_teste/</url>
+          </repository>
+        </repositories>
+      </profile>
+    </profiles>
+</settings>

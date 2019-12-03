@@ -1,0 +1,95 @@
+pipeline {
+/* Foi iniciado um comentário com múltiplas linhas.
+  Este texto será ignorado durante a execução do pipeline.
+
+  #--------------------- TAREFAS REQUISITOS AO PIPELINE --------------------#
+
+  #------PASSOS A SEREM EXECUTADOS APENAS NO 1º BUILD ------------------#
+  1) Você precisa adicionar uma nova credencial com os IDs:
+     'meu-acesso-git-teste',
+     'acesso-ssh-ci-server',
+
+  Acesse a interface web do Jenkins e clique no menu:
+  Jenkins Dashboard -> Credentials -> System.
+  Em seguida, clique em 'Global credentials (unrestricted)' e depois clique
+  em: 'Add Credentials'. Apenas a credencial 'meu-acesso-git-teste' deve ser do tipo
+  'Gitlab API Token'. Será necessário instalar os plugins: Gogs, Gitlab e Gitlab Hook
+  no Jenkins.
+
+*/
+
+  // A seção 'agent' define o nome do node cadastrado no Jenkins que
+  // deverá executar o pipeline
+  agent { label 'node-ubuntu'}
+
+  // A seção 'environment' contém a declaração de variáveis usadas no pipeline
+  environment {
+
+    // As variáveis de ambiente, preferencialmente devem estar em caixa alta
+    // para facilitar a diferenciação das palavras reservadas do pipeline.
+    // 'null', significa que variável será iniciada com o valor nulo (vazio)
+    LAST_TAG_APP = null
+    VERSAO_APP   = null
+
+    // Aspas simples servem para unificar o texto.
+    WORKSPACE_DIR = pwd()
+    URL_GIT       = 'http://ci-server.domain.com.br/root/applivro-jenkins.git'
+    PROJECT       = 'applivro'
+    DIR_TMP       = '/tmp'
+  }
+
+  stages {
+    stage('Checkout Project'){
+      steps{
+
+        // Usando o 'echo' para exibir uma mensagem
+        echo 'Checkout do projeto do Git...'
+
+        // Usando o 'sh' para acessar o shell bash do node para executar comandos
+        sh "mkdir -p $WORKSPACE_DIR/app/;"
+
+        // Acessando o diretório de trabalho e executando comandos dentro
+        // desse diretório
+        dir("${WORKSPACE_DIR}/app/"){
+
+          // Checkout do projeto
+          git credentialsId: 'meu-acesso-git-teste', branch: 'master',
+            url: "${URL_GIT}"
+
+          // Obtendo a tag atual para uso neste ciclo
+          script{
+            LAST_TAG_APP = sh(returnStdout: true, script: "git describe --tags `git rev-list --tags --max-count=1`").trim();
+          }
+
+          // Obtendo a versão da aplicação a partir do pom.xml
+          script{
+            VERSAO_APP = sh(returnStdout: true,
+                              script: """./mvnw help:evaluate \
+                                -Dexpression=project.version | grep -e '^[^\\[]' | tail -n1""").trim()
+          }
+        }
+      }
+    }
+    stage('Build App') {
+      steps{
+        dir("${WORKSPACE_DIR}/app/"){
+          echo "====> Pulando os testes ao gerar o pacote da aplicação web na versão ${VERSAO_APP} e enviando-o ao Nexus..."
+          sh """./mvnw clean deploy -DskipTests \
+                  -Dmaven.wagon.http.ssl.insecure=true \
+                  -Dmaven.wagon.http.ssl.allowall=true \
+                  -Dmaven.wagon.http.ssl.ignore.validity.dates=true ;
+              """
+        }
+      }
+    }
+    stage('Results') {
+      steps {
+        echo 'Fim do Pipeline... Foi gerado o pacote da aplicação com as seguintes informações'
+        echo "PROJECT      => $PROJECT"
+        echo "LAST_TAG_APP => $LAST_TAG_APP"
+        echo "VERSAO_APP   => $VERSAO_APP"
+        echo "URL_GIT      => $URL_GIT"
+      }
+    }
+  }
+}

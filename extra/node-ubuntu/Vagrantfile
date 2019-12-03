@@ -1,0 +1,108 @@
+# Informacoes
+# autor: "Aécio Pires"
+# email: http://blog.aeciopires.com/contato
+#
+# OBS.: Execute os comandos abaixo para instalar os plugins
+# vagrant plugin install vagrant-disksize
+# vagrant plugin install vagrant-vbguest
+#
+# Inicie a VM com os seguintes comandos
+# cd node-ubuntu
+# vagrant init
+# vagrant up --provision
+#
+# Para acessar a VM via SSH
+# vagrant ssh
+#
+# Para desligar a VM
+# vagrant halt
+#
+# Para remover a VM
+# vagrant destroy
+#
+
+#Verificando e instalando as dependencias de plugins do Vagrant
+required_plugins = %w( vagrant-disksize vagrant-vbguest )
+required_plugins.each do |plugin|
+  system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+  raise "The plugin #{plugin} is required. Please run `vagrant plugin install #{plugin}`"  unless Vagrant.has_plugin? plugin
+end
+
+#------------------------------------------------#
+# Declaracao de variaveis
+#------------------------------------------------#
+Vagrant.require_version ">= 2.0.0"
+VAGRANTFILE_API_VERSION = "2"
+HOSTNAME                = "node-ubuntu.domain.com.br"
+
+#Nome da box (template do S.O) obtido em:
+#  https://app.vagrantup.com/boxes/search
+BOXNAME     = "aeciopires/ubuntu-18.04-64-puppet"
+BOX_VERSION = "2.0.0"
+
+#Nome da interface de rede bridge do host local a ser usada
+#para a VM receber um IP via DHCP
+NETWORK_INTERFACE_BRIDGE = "enp0s8"
+
+#Quantidade de memoria da VM (em MB)
+MEMORY = "2048"
+
+#Quantidade de CPUs para a VM
+CPU = "1"
+
+#Tamanho do HD da VM
+DISKSIZE = "20GB"
+
+#Diretorio de origem do seu host.
+# pode ser um diretorio com path (caminho) relativo no qual esta o arquivo Vagranfile
+# ou pode ser um path (caminho) completo.
+#
+#O conteudo das pastas sera sincronizado apos a execucao de um dos comandos abaixo
+#--> vagrant up
+#--> vagrant reload
+DIR_SOURCE = "data/"
+
+#Diretorio destino dentro da VM
+DIR_DESTINY = "/vagrant"
+
+#Diretorio relativo dos manifests Puppet
+DIR_MANIFESTS = "../manifests_puppet"
+
+#Nome do manifest Puppet
+MANIFEST = "livro.pp"
+
+#Definindo o locale da VM, independente do host hospedeiro
+ENV["LC_ALL"] = "en_US.UTF-8"
+#------------------------------------------------#
+
+
+
+#*******************************#
+#Inicio das configuracoes da VM
+#*******************************#
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.hostname          = HOSTNAME
+  config.vm.box               = BOXNAME
+  config.vm.box_check_update  = true
+  config.vm.box_version       = BOX_VERSION
+  config.vm.synced_folder     DIR_SOURCE, DIR_DESTINY
+  config.disksize.size        = DISKSIZE
+  config.vm.provider "virtualbox" do |vb|
+    vb.name        = HOSTNAME
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    vb.cpus        = CPU
+    vb.memory      = MEMORY
+  end
+  config.vm.network "public_network",
+    use_dhcp_assigned_default_route: false,
+    bridge: NETWORK_INTERFACE_BRIDGE
+  config.vm.provision "puppet" do |puppet|
+    puppet.manifests_path = DIR_MANIFESTS
+    puppet.manifest_file  = MANIFEST
+    puppet.options        = "--verbose --debug"
+  end
+
+end

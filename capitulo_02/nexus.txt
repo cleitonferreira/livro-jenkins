@@ -1,0 +1,7 @@
+sudo mkdir -p /docker/nexus/data
+sudo chown -R 200 /docker/nexus/data
+
+docker run -d -p 8081:8081 -p 8082:8082 \
+  --name nexus --restart always \
+  -v /docker/nexus/data:/nexus-data \
+  sonatype/nexus3

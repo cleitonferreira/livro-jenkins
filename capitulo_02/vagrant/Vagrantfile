@@ -1,0 +1,160 @@
+# Informações
+# autor: "Aécio Pires"
+# email: http://blog.aeciopires.com/contato
+#
+# OBS.: Execute os comandos a seguir para instalar os plugins
+# vagrant plugin install vagrant-disksize
+# vagrant plugin install vagrant-vbguest
+#
+# Inicie as VMs com os seguintes comandos
+# vagrant init
+# vagrant up --provision
+#
+# Para acessar cada VM via SSH
+# vagrant ssh server
+# vagrant ssh node
+# vagrant ssh prod
+#
+# Para desligar as VMs
+# vagrant halt
+#
+# Para remover as VMs
+# vagrant destroy
+#
+
+# Verificando e instalando as dependências de plugins do Vagrant
+required_plugins = %w( vagrant-disksize vagrant-vbguest )
+required_plugins.each do |plugin|
+  system "vagrant plugin install #{plugin}" unless Vagrant.has_plugin? plugin
+  raise "The plugin #{plugin} is required. Please run `vagrant plugin install #{plugin}`"  unless Vagrant.has_plugin? plugin
+end
+
+#------------------------------------------------#
+# Declaração de variáveis
+#------------------------------------------------#
+Vagrant.require_version ">= 2.0.0"
+VAGRANTFILE_API_VERSION = "2"
+TIMEOUT = 600
+
+# Nome da box (template do S.O) obtido em:
+#  https://app.vagrantup.com/boxes/search
+BOXNAME     = "aeciopires/ubuntu-18.04-64-puppet"
+BOX_VERSION = "3.0.0"
+
+# Endereço da rede das máquinas virtuais
+NET_ADDRESS = "192.168.56"
+
+# Tamanho do HD da VM
+DISKSIZE = "20GB"
+
+# Diretório de origem do seu host.
+# Pode ser um diretório com path (caminho) relativo no qual está o arquivo Vagranfile
+# ou pode ser um path (caminho) completo.
+#
+# O conteúdo das pastas será sincronizado após a execução de um dos comandos a seguir
+# --> vagrant up
+# --> vagrant reload
+DIR_SOURCE = "data/"
+
+# Diretório destino dentro da VM
+DIR_DESTINY = "/vagrant"
+
+# Diretório relativo dos manifests Puppet
+DIR_MANIFESTS = "manifests_puppet"
+
+# Nome do manifest Puppet
+MANIFEST = "livro.pp"
+
+# Definindo o locale da VM, independente do host hospedeiro
+ENV["LC_ALL"] = "en_US.UTF-8"
+#------------------------------------------------#
+
+
+#*******************************#
+# Início das configurações das VMs
+#*******************************#
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  #---------------------------------------
+  # Criando a VM ci-server
+  config.vm.define :server, primary: true do |server_config|
+    server_config.vm.provider "virtualbox" do |vb|
+        vb.memory = '3096'
+        vb.cpus   = '1'
+        vb.name   = 'ci-server.domain.com.br'
+        #vb.customize ["modifyvm", :id, "--ioapic", "on"]
+        vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    end
+
+    #server_config.disksize.size       = DISKSIZE
+    server_config.vm.hostname         = 'ci-server.domain.com.br'
+    server_config.vm.box              = BOXNAME
+    server_config.vm.boot_timeout     = TIMEOUT
+    server_config.vm.box_check_update = true
+    server_config.vm.box_version      = BOX_VERSION
+    server_config.vm.network "private_network", ip: "#{NET_ADDRESS}.10"
+    server_config.vm.synced_folder DIR_SOURCE, DIR_DESTINY
+
+    config.vm.provision "puppet" do |puppet|
+      puppet.manifests_path = DIR_MANIFESTS
+      puppet.manifest_file  = MANIFEST
+      puppet.options        = "--verbose --debug"
+    end
+  end
+
+  #---------------------------------------
+  # Criando a VM node-ubuntu
+  config.vm.define :node, primary: true do |node_config|
+    node_config.vm.provider "virtualbox" do |vb|
+        vb.memory = '2048'
+        vb.cpus   = '1'
+        vb.name   = 'node-ubuntu.domain.com.br'
+        #vb.customize ["modifyvm", :id, "--ioapic", "on"]
+        vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    end
+
+    #node_config.disksize.size       = DISKSIZE
+    node_config.vm.hostname         = 'node-ubuntu.domain.com.br'
+    node_config.vm.box              = BOXNAME
+    node_config.vm.boot_timeout     = TIMEOUT
+    node_config.vm.box_check_update = true
+    node_config.vm.box_version      = BOX_VERSION
+    node_config.vm.network "private_network", ip: "#{NET_ADDRESS}.11"
+    node_config.vm.synced_folder DIR_SOURCE, DIR_DESTINY
+
+    config.vm.provision "puppet" do |puppet|
+      puppet.manifests_path = DIR_MANIFESTS
+      puppet.manifest_file  = MANIFEST
+      puppet.options        = "--verbose --debug"
+    end
+  end
+
+  #---------------------------------------
+  # Criando a VM prod
+  config.vm.define :prod, primary: true do |prod_config|
+    prod_config.vm.provider "virtualbox" do |vb|
+        vb.memory = '1024'
+        vb.cpus   = '1'
+        vb.name   = 'prod.domain.com.br'
+        #vb.customize ["modifyvm", :id, "--ioapic", "on"]
+        vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    end
+
+    #prod_config.disksize.size       = DISKSIZE
+    prod_config.vm.hostname         = 'prod.domain.com.br'
+    prod_config.vm.box              = BOXNAME
+    prod_config.vm.boot_timeout     = TIMEOUT
+    prod_config.vm.box_check_update = true
+    prod_config.vm.box_version      = BOX_VERSION
+    prod_config.vm.network "private_network", ip: "#{NET_ADDRESS}.12"
+    prod_config.vm.synced_folder DIR_SOURCE, DIR_DESTINY
+
+    config.vm.provision "puppet" do |puppet|
+      puppet.manifests_path = DIR_MANIFESTS
+      puppet.manifest_file  = MANIFEST
+      puppet.options        = "--verbose --debug"
+    end
+  end
+
+end

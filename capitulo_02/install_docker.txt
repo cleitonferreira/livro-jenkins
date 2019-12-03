@@ -1,0 +1,32 @@
+Instale o Docker-CE seguindo as instruções das páginas abaixo de acordo com a
+distribuição GNU/Linux.
+
+* No Ubuntu:
+https://docs.docker.com/install/linux/docker-ce/ubuntu/
+
+* No Fedora:
+https://docs.docker.com/install/linux/docker-ce/fedora/
+
+* No CentOS:
+https://docs.docker.com/install/linux/docker-ce/centos/
+
+* No Debian:
+https://docs.docker.com/install/linux/docker-ce/debian/
+
+Altere o valor da variárel ``USUARIO`` pelo nome da sua conta no S.O no qual
+o Docker foi instalado e execute os comandos abaixo para adicionar o seu usuário
+ ao grupo Docker.
+
+USUARIO="seu-nome-usuario"
+sudo usermod -aG docker $USUARIO
+sudo setfacl -m user:$USUARIO:rw /var/run/docker.sock
+
+OPCIONAL: você pode configurar o Docker para ser inicializado no boot do S.O
+seguindo as instruções da página:
+https://docs.docker.com/install/linux/linux-postinstall/
+
+OPCIONAL: Neste livro não será usado o Docker no MacOS, mas segue abaixo as
+instruções para instalar o Docker neste sistema.
+
+* No Mac OS:
+https://docs.docker.com/docker-for-mac/install/

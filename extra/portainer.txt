@@ -1,0 +1,13 @@
+# Iniciando o Docker Swarm
+docker swarm init --advertise-addr 172.17.0.1
+
+# Iniciando o Portainer
+mkdir -p /docker/portainer/data
+
+docker service create --name portainer \
+ --publish 9090:9000 \
+ --constraint 'node.role == manager' \
+ --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
+ --mount type=bind,src=/docker/portainer/data,dst=/data \
+ portainer/portainer \
+ -H unix:///var/run/docker.sock

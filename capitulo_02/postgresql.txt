@@ -1,0 +1,11 @@
+sudo mkdir -p /docker/postgresql/data
+sudo chown -R 999:999 /docker/postgresql/data
+
+docker run -d -p 5432:5432 \
+  --name postgresql \
+  --restart=always \
+  -v /docker/postgresql/data:/var/lib/postgresql/data  \
+  -e POSTGRES_PASSWORD=livro \
+  -e POSTGRES_USER=livro \
+ -e POSTGRES_DB=livro \
+  postgres

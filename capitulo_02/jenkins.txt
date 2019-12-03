@@ -1,0 +1,12 @@
+# Instalando o Jenkins via Docker
+sudo mkdir -p /docker/jenkins/data
+sudo chown -R 1000 /docker/jenkins/data
+
+docker run -d -p 8080:8080 -p 50000:50000 \
+  --name jenkins --restart always \
+  -v /docker/jenkins/data:/var/jenkins_home \
+  --network=host jenkins/jenkins:lts
+
+
+# Obtendo a senha inicial do Admin do Jenkins.
+cat /docker/jenkins/data/secrets/initialAdminPassword

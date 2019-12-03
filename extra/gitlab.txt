@@ -1,0 +1,11 @@
+sudo mkdir -p /docker/gitlab/data
+sudo mkdir -p /docker/gitlab/config
+sudo mkdir -p /docker/gitlab/logs
+
+docker run -d -p 443:443 -p 80:80 -p 2022:22 \
+  --name gitlab --hostname code.domain.com.br --restart always \
+  --env GITLAB_OMNIBUS_CONFIG="external_url 'http://code.domain.com.br';" \
+  -v /docker/gitlab/config:/etc/gitlab \
+  -v /docker/gitlab/logs/:/var/log/gitlab \
+  -v /docker/gitlab/data/:/var/opt/gitlab \
+  gitlab/gitlab-ce:latest

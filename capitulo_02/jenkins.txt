@@ -2,7 +2,7 @@
 sudo mkdir -p /docker/jenkins/data
 sudo chown -R 1000 /docker/jenkins/data
 
-docker run -d -p 8080:8080 -p 50000:50000 \
+docker run -d -p 8181:8080 -p 50000:50000 \
   --name jenkins --restart always \
   -v /docker/jenkins/data:/var/jenkins_home \
   --network=host jenkins/jenkins:lts
